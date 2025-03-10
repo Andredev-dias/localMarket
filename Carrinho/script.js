@@ -75,36 +75,70 @@ $(document).ready(function () {
     // Variável para calcular o total em preço
     let totalPreco = 0;
 
-    // Itera sobre os itens do carrinho
-    $.each(carrinho, function (index, item) {
-      // Cria um elemento de lista para cada item
-      const listItem = $("<li>").text(
-        `${item.descricao} - Preço: $${item.preco.toFixed(2)}`
+    // Objeto para contar itens repetidos
+    const contadorItens = {};
+
+    // Percorre o carrinho e contabiliza os itens repetidos
+    carrinho.forEach((item) => {
+      const chave = `${item.descricao}-${item.preco}-${item.imagem}`; // Identificador único incluindo imagem
+      if (contadorItens[chave]) {
+        contadorItens[chave].quantidade++;
+      } else {
+        contadorItens[chave] = { ...item, quantidade: 1 };
+      }
+    });
+
+    // Itera sobre os itens agrupados e os exibe
+    Object.values(contadorItens).forEach((item, index) => {
+      // Criando o elemento da lista
+      const listItem = $("<li>").css({
+        display: "flex",
+        alignItems: "center",
+        marginBottom: "10px",
+      });
+
+      // Adicionando a imagem pequena
+      const imagem = $("<img>")
+        .attr("src", item.imagem)
+        .attr("alt", item.descricao)
+        .css({
+          width: "40px",
+          height: "40px",
+          marginRight: "10px",
+          borderRadius: "5px",
+        });
+
+      // Adicionando o texto com quantidade, descrição e preço
+      const texto = $("<span>").text(
+        `${item.quantidade}x - ${item.descricao} - $${item.preco.toFixed(2)}`
       );
 
-      // Cria um botão de remoção
+      // Criando o botão de remoção
       const removeButton = $("<button>")
         .text("❌")
-        .css("margin-left", "10px")
+        .css({
+          marginLeft: "10px",
+          cursor: "pointer",
+        })
         .click(function () {
           removerItemDoCarrinho(index);
         });
 
-      // Adiciona o botão à lista
-      listItem.append(removeButton);
+      // Montando a estrutura do item na lista
+      listItem.append(imagem, texto, removeButton);
 
-      // Adiciona o item à lista
+      // Adicionando o item na lista
       listaElement.append(listItem);
 
-      // Adiciona o preço do item ao total
-      totalPreco += item.preco;
+      // Adicionando o preço total do item ao valor final
+      totalPreco += item.preco * item.quantidade;
     });
 
     // Exibe o total em preço no elemento totalElement
     totalElement.text(`Total: $${totalPreco.toFixed(2)}`);
   }
 
-  // Função para remover um item do carrinho
+  // Função para remover um item do carrinho (remove um único item)
   function removerItemDoCarrinho(index) {
     carrinho.splice(index, 1);
     localStorage.setItem("carrinho", JSON.stringify(carrinho));
